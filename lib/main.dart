@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:waraqty_app/features/exam/cubit/exam_cubit.dart';
 import 'package:waraqty_app/features/exam/repos/exam_repository.dart';
 import 'package:waraqty_app/features/exam/screens/create_exam_screen.dart';
+import 'package:waraqty_app/features/exam/screens/exam_preview_screen.dart';
 import 'package:waraqty_app/features/home/screens/home_screen.dart';
 
 void main() {
@@ -38,7 +39,11 @@ class MyApp extends StatelessWidget {
             onMyExams: () {},
             onSettings: () {},
             onOpenExam: (exam) {
-              // هنربطها بعدين بشاشة تفاصيل الامتحان
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ExamPreviewScreen(exam: exam),
+                ),
+              );
             },
           );
         },

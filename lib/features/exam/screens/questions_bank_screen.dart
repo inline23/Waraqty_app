@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/exam_cubit.dart';
 import '../models/question_model.dart';
 import 'question_type_screen.dart';
+import 'exam_preview_screen.dart';
 import 'create_exam_screen.dart';
 
 class QuestionsBankScreen extends StatelessWidget {
@@ -69,6 +70,12 @@ class QuestionsBankScreen extends StatelessWidget {
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50), foregroundColor: const Color(0xFF431599)),
                 onPressed: () => Navigator.pop(context), icon: const Icon(Icons.edit_outlined), label: const Text('تعديل بيانات الامتحان'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50), foregroundColor: const Color(0xFF431599)),
+                onPressed: exam.questions.isEmpty ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => ExamPreviewScreen(exam: exam))),
+                icon: const Icon(Icons.visibility_outlined), label: const Text('معاينة ورقة الامتحان'),
               ),
               const SizedBox(height: 10),
               FilledButton.icon(
