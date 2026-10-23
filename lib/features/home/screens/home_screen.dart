@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   static const Color primaryColor = Color(0xFF431599);
   static const Color accentColor = Color(0xFF6D42C1);
-  static const Color backgroundColor = Color(0xFFF8F6FC);
+  static const Color backgroundColor = Colors.white;
 
   @override
   void initState() {
@@ -49,9 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
         body: SafeArea(
           child: BlocBuilder<ExamCubit, ExamState>(
             builder: (context, state) {
-              final exams = state is ExamLoaded
-                  ? state.exams
-                  : <ExamModel>[];
+              final exams = state is ExamLoaded ? state.exams : <ExamModel>[];
 
               final totalQuestions = exams.fold<int>(
                 0,
@@ -65,12 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(
-                        20,
-                        18,
-                        20,
-                        24,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           _buildHeader(),
@@ -79,20 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 22),
                           _buildCreateExamCard(),
                           const SizedBox(height: 28),
-                          _buildSectionTitle(
-                            'نظرة عامة',
-                            'تابع إنجازاتك',
-                          ),
+                          _buildSectionTitle('نظرة عامة', 'تابع إنجازاتك'),
                           const SizedBox(height: 14),
-                          _buildStatistics(
-                            exams.length,
-                            totalQuestions,
-                          ),
+                          _buildStatistics(exams.length, totalQuestions),
                           const SizedBox(height: 30),
-                          _buildSectionTitle(
-                            'ابدأ بسرعة',
-                            'اختر نوع السؤال',
-                          ),
+                          _buildSectionTitle('ابدأ بسرعة', 'اختر نوع السؤال'),
                           const SizedBox(height: 14),
                           _buildQuickActions(),
                           const SizedBox(height: 30),
@@ -111,7 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        bottomNavigationBar: _buildBottomNavigation(),
       ),
     );
   }
@@ -120,8 +102,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -133,11 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.menu_book_rounded,
-            color: primaryColor,
-            size: 27,
-          ),
+          child: Image.asset('assets/images/logo1.png', width: 50, height: 50),
         ),
         const SizedBox(width: 12),
         const Expanded(
@@ -155,18 +133,12 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: 2),
               Text(
                 'كل امتحاناتك في مكان واحد',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black54,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ],
           ),
         ),
-        _IconButton(
-          icon: Icons.notifications_none_rounded,
-          onTap: () {},
-        ),
+        _IconButton(icon: Icons.notifications_none_rounded, onTap: () {}),
       ],
     );
   }
@@ -177,8 +149,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final greeting = hour < 12
         ? 'صباح الخير 👋'
         : hour < 18
-            ? 'مساء الخير 👋'
-            : 'مساء الخير 👋';
+        ? 'مساء الخير 👋'
+        : 'مساء الخير 👋';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,10 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 8),
         const Text(
           'جاهز تحضّر امتحانك الجديد؟',
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontSize: 15, color: Colors.black54),
         ),
       ],
     );
@@ -209,10 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF431599),
-            Color(0xFF7047C6),
-          ],
+          colors: [Color(0xFF431599), Color(0xFF7047C6)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -266,10 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.add_rounded),
               label: const Text(
                 'إنشاء امتحان جديد',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
@@ -302,10 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 4),
         Text(
           subtitle,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.black54,
-          ),
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
     );
@@ -371,10 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: widget.onCreateExam,
           borderRadius: BorderRadius.circular(14),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 13,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
@@ -418,20 +375,14 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: widget.onMyExams,
           child: const Text(
             'عرض الكل',
-            style: TextStyle(
-              color: primaryColor,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: primaryColor, fontWeight: FontWeight.w700),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildRecentExams(
-    ExamState state,
-    List<ExamModel> exams,
-  ) {
+  Widget _buildRecentExams(ExamState state, List<ExamModel> exams) {
     if (state is ExamFailure) {
       return Container(
         width: double.infinity,
@@ -471,10 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (exams.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 28,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -497,10 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 14),
             const Text(
               'لسه مفيش امتحانات',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 7),
             const Text(
@@ -667,10 +612,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -714,10 +656,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 16,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -739,10 +678,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.black54,
-            ),
+            style: const TextStyle(fontSize: 11, color: Colors.black54),
           ),
         ],
       ),
@@ -751,10 +687,7 @@ class _StatCard extends StatelessWidget {
 }
 
 class _IconButton extends StatelessWidget {
-  const _IconButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _IconButton({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
@@ -792,18 +725,13 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected
-        ? const Color(0xFF431599)
-        : Colors.black45;
+    final color = selected ? const Color(0xFF431599) : Colors.black45;
 
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 7,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -814,8 +742,7 @@ class _NavItem extends StatelessWidget {
               style: TextStyle(
                 color: color,
                 fontSize: 11,
-                fontWeight:
-                    selected ? FontWeight.w800 : FontWeight.w500,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
               ),
             ),
           ],
