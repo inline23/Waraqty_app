@@ -1,3 +1,4 @@
+<img width="1536" height="1024" alt="Waraqty Arabic Exam App Showcase" src="https://github.com/user-attachments/assets/56227528-5b35-4494-baae-e5039090c071" />
 
 # Waraqty | ورقتي
 
