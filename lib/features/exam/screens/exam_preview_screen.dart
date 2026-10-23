@@ -1,19 +1,31 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:printing/printing.dart';
 
+import '../cubit/exam_cubit.dart';
 import '../models/exam_model.dart';
 import '../models/question_model.dart';
 import '../models/question_type.dart';
 import '../services/exam_pdf_service.dart';
+import 'edit_exam_screen.dart';
 
-class ExamPreviewScreen extends StatelessWidget {
+class ExamPreviewScreen extends StatefulWidget {
   final ExamModel exam;
 
-  const ExamPreviewScreen({
-    super.key,
-    required this.exam,
-  });
+  const ExamPreviewScreen({super.key, required this.exam});
+
+  @override
+  State<ExamPreviewScreen> createState() => _ExamPreviewScreenState();
+}
+
+class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
+  late ExamModel _exam;
+
+  @override
+  void initState() {
+    super.initState();
+    _exam = widget.exam;
+  }
 
   static const Color purple = Color(0xFF431599);
   static const Color background = Color(0xFFFAF9FF);
@@ -31,11 +43,11 @@ class ExamPreviewScreen extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final bytes = await ExamPdfService.build(exam);
+      final bytes = await ExamPdfService.build(_exam);
 
       await Printing.sharePdf(
         bytes: bytes,
-        filename: ExamPdfService.fileName(exam),
+        filename: ExamPdfService.fileName(_exam),
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -52,8 +64,8 @@ class ExamPreviewScreen extends StatelessWidget {
 
     try {
       await Printing.layoutPdf(
-        name: ExamPdfService.fileName(exam),
-        onLayout: (_) => ExamPdfService.build(exam),
+        name: ExamPdfService.fileName(_exam),
+        onLayout: (_) => ExamPdfService.build(_exam),
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -62,6 +74,24 @@ class ExamPreviewScreen extends StatelessWidget {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  /// يفتح تدفق التعديل ويرجع بالنتيجة لتحديث المعاينة بعد الحفظ.
+  Future<void> _openEdit(BuildContext context) async {
+    // نأخذ مرجع الـ cubit قبل الـ async gap لتفادي لينت BuildContext
+    final cubit = context.read<ExamCubit>();
+    cubit.loadExamForEdit(_exam);
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditExamScreen(exam: _exam)),
+    );
+    // بعد العودة، نحدّث _exam من الـ cubit (لو تم حفظ تعديلات)
+    if (!mounted) return;
+    final saved = cubit.exams;
+    final updated = saved.where((e) => e.id == _exam.id).firstOrNull;
+    if (updated != null) {
+      setState(() => _exam = updated);
     }
   }
 
@@ -78,10 +108,7 @@ class ExamPreviewScreen extends StatelessWidget {
           centerTitle: true,
           title: const Text(
             'معاينة الامتحان',
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
           ),
         ),
         body: Column(
@@ -108,10 +135,7 @@ class ExamPreviewScreen extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 9,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
             color: purple,
             borderRadius: BorderRadius.circular(24),
@@ -119,11 +143,7 @@ class ExamPreviewScreen extends StatelessWidget {
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.description_outlined,
-                color: Colors.white,
-                size: 18,
-              ),
+              Icon(Icons.description_outlined, color: Colors.white, size: 18),
               SizedBox(width: 7),
               Text(
                 'معاينة ورقة الامتحان',
@@ -138,7 +158,7 @@ class ExamPreviewScreen extends StatelessWidget {
         ),
         const Spacer(),
         Text(
-          '${exam.questions.length} أسئلة',
+          '${_exam.questions.length} أسئلة',
           style: const TextStyle(
             color: Color(0xFF756A88),
             fontSize: 12,
@@ -179,7 +199,7 @@ class ExamPreviewScreen extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           _buildExamInfo(),
-          if (exam.instructions?.trim().isNotEmpty == true) ...[
+          if (_exam.instructions?.trim().isNotEmpty == true) ...[
             const SizedBox(height: 14),
             _buildInstructions(),
           ],
@@ -189,15 +209,12 @@ class ExamPreviewScreen extends StatelessWidget {
             title: 'أسئلة الامتحان',
           ),
           const SizedBox(height: 12),
-          if (exam.questions.isEmpty)
+          if (_exam.questions.isEmpty)
             _buildEmptyQuestions()
           else
             ...List.generate(
-              exam.questions.length,
-              (index) => _buildQuestion(
-                exam.questions[index],
-                index + 1,
-              ),
+              _exam.questions.length,
+              (index) => _buildQuestion(_exam.questions[index], index + 1),
             ),
           const SizedBox(height: 16),
           _buildFooter(),
@@ -206,9 +223,31 @@ class ExamPreviewScreen extends StatelessWidget {
     );
   }
 
+  /// Header محدث — اسم المدرس صغير في أعلى اليمين.
   Widget _buildHeader() {
+    final teacher = _exam.teacherName?.trim().isNotEmpty == true
+        ? _exam.teacherName!.trim()
+        : null;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // اسم المدرس في أعلى اليمين (صغير)
+        if (teacher != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              teacher,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF514663),
+                height: 1.4,
+              ),
+            ),
+          ),
+        if (teacher != null) const SizedBox(height: 4),
+
+        // البسملة
         const Text(
           'بسم الله الرحمن الرحيم',
           textAlign: TextAlign.center,
@@ -218,21 +257,11 @@ class ExamPreviewScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 14),
-        Text(
-          exam.teacherName?.trim().isNotEmpty == true
-              ? exam.teacherName!.trim()
-              : 'اسم المدرس',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: textColor,
-            fontSize: 23,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
         const SizedBox(height: 10),
+
+        // عنوان الامتحان
         Text(
-          exam.title,
+          _exam.title,
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: purple,
@@ -243,22 +272,14 @@ class ExamPreviewScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'المادة: ${exam.subject}',
+          'المادة: ${_exam.subject}',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: textColor,
-            fontSize: 14,
-            height: 1.7,
-          ),
+          style: const TextStyle(color: textColor, fontSize: 14, height: 1.7),
         ),
         Text(
-          'الصف: ${exam.grade}',
+          'الصف: ${_exam.grade}',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: textColor,
-            fontSize: 14,
-            height: 1.7,
-          ),
+          style: const TextStyle(color: textColor, fontSize: 14, height: 1.7),
         ),
       ],
     );
@@ -280,14 +301,14 @@ class ExamPreviewScreen extends StatelessWidget {
               Expanded(
                 child: _infoItem(
                   icon: Icons.schedule_rounded,
-                  text: 'الزمن: ${exam.durationMinutes} دقيقة',
+                  text: 'الزمن: ${_exam.durationMinutes} دقيقة',
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _infoItem(
                   icon: Icons.grade_outlined,
-                  text: 'الدرجة: ${formatMarks(exam.totalMarks)}',
+                  text: 'الدرجة: ${formatMarks(_exam.totalMarks)}',
                 ),
               ),
             ],
@@ -310,10 +331,7 @@ class ExamPreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoItem({
-    required IconData icon,
-    required String text,
-  }) {
+  Widget _infoItem({required IconData icon, required String text}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -347,11 +365,7 @@ class ExamPreviewScreen extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.assignment_outlined,
-                color: purple,
-                size: 19,
-              ),
+              Icon(Icons.assignment_outlined, color: purple, size: 19),
               SizedBox(width: 8),
               Text(
                 'تعليمات الامتحان',
@@ -365,27 +379,17 @@ class ExamPreviewScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            exam.instructions!,
-            style: const TextStyle(
-              color: textColor,
-              fontSize: 13,
-              height: 1.8,
-            ),
+            _exam.instructions!,
+            style: const TextStyle(color: textColor, fontSize: 13, height: 1.8),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle({
-    required IconData icon,
-    required String title,
-  }) {
+  Widget _buildSectionTitle({required IconData icon, required String title}) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 13,
-        vertical: 11,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       decoration: BoxDecoration(
         color: lavender,
         borderRadius: BorderRadius.circular(11),
@@ -442,10 +446,7 @@ class ExamPreviewScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: lavender,
                   borderRadius: BorderRadius.circular(8),
@@ -502,12 +503,8 @@ class ExamPreviewScreen extends StatelessWidget {
         return [
           const Row(
             children: [
-              Expanded(
-                child: _AnswerOption(label: 'صح'),
-              ),
-              Expanded(
-                child: _AnswerOption(label: 'خطأ'),
-              ),
+              Expanded(child: _AnswerOption(label: 'صح')),
+              Expanded(child: _AnswerOption(label: 'خطأ')),
             ],
           ),
         ];
@@ -521,10 +518,7 @@ class ExamPreviewScreen extends StatelessWidget {
           ),
           (_) => const Padding(
             padding: EdgeInsets.only(top: 23),
-            child: Divider(
-              color: Color(0xFFBDB5C9),
-              height: 1,
-            ),
+            child: Divider(color: Color(0xFFBDB5C9), height: 1),
           ),
         );
     }
@@ -540,10 +534,7 @@ class ExamPreviewScreen extends StatelessWidget {
       child: const Text(
         'لم تتم إضافة أسئلة إلى هذا الامتحان بعد.',
         textAlign: TextAlign.center,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 14,
-        ),
+        style: TextStyle(color: textColor, fontSize: 14),
       ),
     );
   }
@@ -565,11 +556,7 @@ class ExamPreviewScreen extends StatelessWidget {
         const Text(
           'مع أطيب التمنيات بالتوفيق والنجاح',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 12,
-            height: 1.7,
-          ),
+          style: TextStyle(color: textColor, fontSize: 12, height: 1.7),
         ),
       ],
     );
@@ -595,50 +582,75 @@ class ExamPreviewScreen extends StatelessWidget {
           children: [
             SizedBox(
               width: double.infinity,
-              height: 54,
+              height: 52,
               child: FilledButton.icon(
                 onPressed: () => _exportPdf(context),
                 icon: const Icon(Icons.picture_as_pdf_outlined),
                 label: const Text(
                   'تصدير / مشاركة PDF',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: purple,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(17),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton.icon(
-                onPressed: () => _printPdf(context),
-                icon: const Icon(Icons.print_outlined),
-                label: const Text(
-                  'طباعة',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _printPdf(context),
+                      icon: const Icon(Icons.print_outlined, size: 19),
+                      label: const Text(
+                        'طباعة',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: purple,
+                        side: const BorderSide(color: Color(0xFFBBA7E4)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: purple,
-                  side: const BorderSide(
-                    color: Color(0xFFBBA7E4),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(17),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openEdit(context),
+                      icon: const Icon(Icons.edit_outlined, size: 19),
+                      label: const Text(
+                        'تعديل الامتحان',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: purple,
+                        side: const BorderSide(color: borderColor),
+                        backgroundColor: lavender.withOpacity(0.45),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -650,9 +662,7 @@ class ExamPreviewScreen extends StatelessWidget {
 class _AnswerOption extends StatelessWidget {
   final String label;
 
-  const _AnswerOption({
-    required this.label,
-  });
+  const _AnswerOption({required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -666,10 +676,7 @@ class _AnswerOption extends StatelessWidget {
         const SizedBox(width: 7),
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF8B8397),
-            fontSize: 13,
-          ),
+          style: const TextStyle(color: Color(0xFF8B8397), fontSize: 13),
         ),
       ],
     );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:waraqty_app/features/exam/cubit/exam_cubit.dart';
+import 'package:waraqty_app/features/exam/models/exam_model.dart';
 import 'package:waraqty_app/features/exam/repos/exam_repository.dart';
 import 'package:waraqty_app/features/exam/screens/create_exam_screen.dart';
 import 'package:waraqty_app/features/exam/screens/exam_preview_screen.dart';
@@ -46,8 +47,6 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  static const Color purple = Color(0xFF431599);
-
   int _selectedIndex = 0;
 
   void _openCreateExam() {
@@ -58,7 +57,7 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  void _openExam(exam) {
+  void _openExam(ExamModel exam) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ExamPreviewScreen(exam: exam),

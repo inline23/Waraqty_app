@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/exam_model.dart';
 import '../models/question_model.dart';
-import '../models/question_type.dart';
 import '../repos/exam_repository.dart';
 
 part 'exam_state.dart';
@@ -102,6 +101,24 @@ class ExamCubit extends Cubit<ExamState> {
   void clearDraft() {
     draft = null;
     emit(ExamDraftCleared());
+  }
+
+  /// تحميل امتحان محفوظ في الـ draft لبدء التعديل عليه.
+  void loadExamForEdit(ExamModel exam) {
+    draft = exam;
+    emit(ExamDraftChanged(draft!));
+  }
+
+  /// إعادة ترتيب الأسئلة (Drag & Drop) — oldIndex → newIndex.
+  void reorderQuestion(int oldIndex, int newIndex) {
+    final current = draft;
+    if (current == null) return;
+    final list = List<QuestionModel>.from(current.questions);
+    if (newIndex > oldIndex) newIndex--;
+    final item = list.removeAt(oldIndex);
+    list.insert(newIndex, item);
+    draft = current.copyWith(questions: list, updatedAt: DateTime.now());
+    emit(ExamDraftChanged(draft!));
   }
 
   Future<void> saveDraft() async {

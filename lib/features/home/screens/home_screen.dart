@@ -596,48 +596,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  Widget _buildBottomNavigation() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(
-                icon: Icons.home_rounded,
-                label: 'الرئيسية',
-                selected: true,
-                onTap: () {},
-              ),
-              _NavItem(
-                icon: Icons.library_books_outlined,
-                label: 'امتحاناتي',
-                onTap: widget.onMyExams,
-              ),
-              _NavItem(
-                icon: Icons.settings_outlined,
-                label: 'الإعدادات',
-                onTap: widget.onSettings,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _StatCard extends StatelessWidget {
@@ -704,48 +662,6 @@ class _IconButton extends StatelessWidget {
           width: 46,
           height: 46,
           child: Icon(icon, color: const Color(0xFF431599)),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.selected = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? const Color(0xFF431599) : Colors.black45;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 23),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-              ),
-            ),
-          ],
         ),
       ),
     );

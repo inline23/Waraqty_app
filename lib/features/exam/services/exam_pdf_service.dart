@@ -182,11 +182,26 @@ class ExamPdfService {
   ) {
     final teacher = exam.teacherName?.trim().isNotEmpty == true
         ? exam.teacherName!.trim()
-        : 'اسم المدرس';
+        : null;
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
+        // اسم المدرس صغير في أعلى اليمين (بدون ما ياخد مساحة كبيرة)
+        if (teacher != null)
+          pw.Row(
+            children: [
+              pw.Expanded(child: pw.SizedBox()),
+              pw.Text(
+                teacher,
+                style: base.copyWith(fontSize: 9, color: PdfColors.grey700),
+              ),
+            ],
+          ),
+
+        if (teacher != null) pw.SizedBox(height: 4),
+
+        // البسملة
         pw.Center(
           child: pw.Text(
             'بسم الله الرحمن الرحيم',
@@ -196,15 +211,7 @@ class ExamPdfService {
 
         pw.SizedBox(height: 5),
 
-        pw.Center(
-          child: pw.Text(
-            teacher,
-            style: bold.copyWith(fontSize: 17, color: _purple),
-          ),
-        ),
-
-        pw.SizedBox(height: 4),
-
+        // عنوان الامتحان
         pw.Center(
           child: pw.Text(
             exam.title,
