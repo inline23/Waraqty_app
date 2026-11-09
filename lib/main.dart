@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -29,9 +28,7 @@ class MyApp extends StatelessWidget {
       title: 'ورقتي',
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF431599),
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF431599)),
         scaffoldBackgroundColor: const Color(0xFFF8F6FC),
       ),
       home: const AppShell(),
@@ -50,19 +47,15 @@ class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
 
   void _openCreateExam() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const CreateExamScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const CreateExamScreen()));
   }
 
   void _openExam(ExamModel exam) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ExamPreviewScreen(exam: exam),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => ExamPreviewScreen(exam: exam)));
   }
 
   void _openMyExams() {
@@ -81,10 +74,7 @@ class _AppShellState extends State<AppShell> {
             onSettings: () {},
             onOpenExam: _openExam,
           ),
-          MyExamsScreen(
-            onOpenExam: _openExam,
-            onCreateExam: _openCreateExam,
-          ),
+          MyExamsScreen(onOpenExam: _openExam, onCreateExam: _openCreateExam),
         ],
       ),
       bottomNavigationBar: NavigationBar(

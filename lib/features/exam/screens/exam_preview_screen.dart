@@ -4,10 +4,12 @@ import 'package:printing/printing.dart';
 
 import '../cubit/exam_cubit.dart';
 import '../models/exam_model.dart';
+import '../models/exam_print_settings.dart';
 import '../models/question_model.dart';
 import '../models/question_type.dart';
 import '../services/exam_pdf_service.dart';
 import 'edit_exam_screen.dart';
+import 'pdf_settings_screen.dart';
 
 class ExamPreviewScreen extends StatefulWidget {
   final ExamModel exam;
@@ -20,6 +22,7 @@ class ExamPreviewScreen extends StatefulWidget {
 
 class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
   late ExamModel _exam;
+  ExamPrintSettings _printSettings = const ExamPrintSettings();
 
   @override
   void initState() {
@@ -41,10 +44,8 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
 
   Future<void> _exportPdf(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-
     try {
-      final bytes = await ExamPdfService.build(_exam);
-
+      final bytes = await ExamPdfService.build(_exam, _printSettings);
       await Printing.sharePdf(
         bytes: bytes,
         filename: ExamPdfService.fileName(_exam),
@@ -61,11 +62,10 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
 
   Future<void> _printPdf(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-
     try {
       await Printing.layoutPdf(
         name: ExamPdfService.fileName(_exam),
-        onLayout: (_) => ExamPdfService.build(_exam),
+        onLayout: (_) => ExamPdfService.build(_exam, _printSettings),
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -75,6 +75,18 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _openPdfSettings(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PdfSettingsScreen(
+          exam: _exam,
+          initialSettings: _printSettings,
+        ),
+      ),
+    );
   }
 
   /// يفتح تدفق التعديل ويرجع بالنتيجة لتحديث المعاينة بعد الحفظ.
@@ -110,6 +122,13 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
             'معاينة الامتحان',
             style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.tune_outlined),
+              tooltip: 'تخصيص PDF',
+              onPressed: () => _openPdfSettings(context),
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -157,6 +176,31 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
           ),
         ),
         const Spacer(),
+        // Template badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: lavender,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_printSettings.template.icon, color: purple, size: 14),
+              const SizedBox(width: 5),
+              Text(
+                _printSettings.template.arabicName,
+                style: const TextStyle(
+                  color: purple,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
         Text(
           '${_exam.questions.length} أسئلة',
           style: const TextStyle(
@@ -630,10 +674,35 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
                   child: SizedBox(
                     height: 48,
                     child: OutlinedButton.icon(
+                      onPressed: () => _openPdfSettings(context),
+                      icon: const Icon(Icons.tune_outlined, size: 19),
+                      label: const Text(
+                        'تخصيص PDF',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: purple,
+                        side: const BorderSide(color: borderColor),
+                        backgroundColor: lavender.withOpacity(0.45),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
                       onPressed: () => _openEdit(context),
                       icon: const Icon(Icons.edit_outlined, size: 19),
                       label: const Text(
-                        'تعديل الامتحان',
+                        'تعديل',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

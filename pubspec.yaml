@@ -17,6 +17,8 @@ dependencies:
   shared_preferences: ^2.5.5
   pdf: ^3.12.0
   printing: ^5.14.3
+  clerk_flutter: ^0.0.18-beta
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +37,6 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo.png"
+  image_path: "assets/images/icon.png"
   adaptive_icon_background: "#431599"
-  adaptive_icon_foreground: "assets/images/logo.png"
+  adaptive_icon_foreground: "assets/images/icon.png"

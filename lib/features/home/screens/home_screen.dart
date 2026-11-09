@@ -115,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          child: Image.asset('assets/images/logo1.png', width: 50, height: 50),
+          child: Image.asset('assets/images/logo.png', width: 50, height: 50),
         ),
         const SizedBox(width: 12),
         const Expanded(
@@ -138,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-        _IconButton(icon: Icons.notifications_none_rounded, onTap: () {}),
+    
       ],
     );
   }
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 18),
           const Text(
-            'أنشئ امتحانك الأول',
+            'أنشئ امتحانك',
             style: TextStyle(
               color: Colors.white,
               fontSize: 22,

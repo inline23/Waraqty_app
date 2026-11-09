@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/exam_cubit.dart';
 import '../models/exam_model.dart';
+import '../repos/exam_repository.dart';
 import 'edit_questions_screen.dart';
 
 const _purple = Color(0xFF431599);
@@ -21,35 +22,16 @@ class _EditExamScreenState extends State<EditExamScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _title;
   late final TextEditingController _teacher;
+  late final TextEditingController _subjectCtrl;
+  late final TextEditingController _gradeCtrl;
   late final TextEditingController _instructions;
-  String? _subject;
-  String? _grade;
   late int _duration;
 
-  final _subjects = const [
-    'اللغة العربية',
-    'اللغة الإنجليزية',
-    'الرياضيات',
-    'العلوم',
-    'الدراسات الاجتماعية',
-    'اللغة الفرنسية',
-  ];
-  final _grades = const [
-    'الصف الأول الابتدائي',
-    'الصف الثاني الابتدائي',
-    'الصف الثالث الابتدائي',
-    'الصف الرابع الابتدائي',
-    'الصف الخامس الابتدائي',
-    'الصف السادس الابتدائي',
-    'الصف الأول الإعدادي',
-    'الصف الثاني الإعدادي',
-    'الصف الثالث الإعدادي',
-    'الصف الأول الثانوي',
-    'الصف الثاني الثانوي',
-    'الصف الثالث الثانوي',
-  ];
-
   final _durations = const [30, 45, 60, 90, 120];
+
+  List<String> _subjectSuggestions = [];
+  List<String> _gradeSuggestions = [];
+  bool _suggestionsLoaded = false;
 
   @override
   void initState() {
@@ -57,16 +39,31 @@ class _EditExamScreenState extends State<EditExamScreen> {
     final e = widget.exam;
     _title = TextEditingController(text: e.title);
     _teacher = TextEditingController(text: e.teacherName ?? '');
+    _subjectCtrl = TextEditingController(text: e.subject);
+    _gradeCtrl = TextEditingController(text: e.grade);
     _instructions = TextEditingController(text: e.instructions ?? '');
-    _subject = _subjects.contains(e.subject) ? e.subject : null;
-    _grade = _grades.contains(e.grade) ? e.grade : null;
     _duration = _durations.contains(e.durationMinutes) ? e.durationMinutes : 60;
+    _loadSuggestions();
+  }
+
+  Future<void> _loadSuggestions() async {
+    final repo = ExamRepository();
+    final subjects = await repo.getUsedSubjects();
+    final grades = await repo.getUsedGrades();
+    if (!mounted) return;
+    setState(() {
+      _subjectSuggestions = subjects;
+      _gradeSuggestions = grades;
+      _suggestionsLoaded = true;
+    });
   }
 
   @override
   void dispose() {
     _title.dispose();
     _teacher.dispose();
+    _subjectCtrl.dispose();
+    _gradeCtrl.dispose();
     _instructions.dispose();
     super.dispose();
   }
@@ -111,26 +108,24 @@ class _EditExamScreenState extends State<EditExamScreen> {
               const SizedBox(height: 14),
 
               _label('المادة الدراسية'),
-              DropdownButtonFormField<String>(
-                value: _subject,
-                items: _subjects
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) => setState(() => _subject = v),
-                validator: (v) => v == null ? 'اختر المادة' : null,
-                decoration: _inputDeco('اختر المادة'),
+              _AutocompleteField(
+                controller: _subjectCtrl,
+                hint: 'اكتب أو اختر المادة الدراسية',
+                suggestions: _suggestionsLoaded ? _subjectSuggestions : [],
+                onChanged: (_) => setState(() {}),
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'اكتب اسم المادة' : null,
               ),
               const SizedBox(height: 14),
 
               _label('الصف الدراسي'),
-              DropdownButtonFormField<String>(
-                value: _grade,
-                items: _grades
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) => setState(() => _grade = v),
-                validator: (v) => v == null ? 'اختر الصف الدراسي' : null,
-                decoration: _inputDeco('اختر الصف'),
+              _AutocompleteField(
+                controller: _gradeCtrl,
+                hint: 'اكتب أو اختر الصف / المرحلة الدراسية',
+                suggestions: _suggestionsLoaded ? _gradeSuggestions : [],
+                onChanged: (_) => setState(() {}),
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'اكتب الصف الدراسي' : null,
               ),
               const SizedBox(height: 14),
 
@@ -231,9 +226,7 @@ class _EditExamScreenState extends State<EditExamScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  _title.text.isEmpty
-                      ? 'عنوان الامتحان سيظهر هنا'
-                      : _title.text,
+                  _title.text.isEmpty ? 'عنوان الامتحان سيظهر هنا' : _title.text,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -242,7 +235,7 @@ class _EditExamScreenState extends State<EditExamScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_subject ?? 'المادة'} • ${_grade ?? 'الصف الدراسي'}',
+                  '${_subjectCtrl.text.isEmpty ? 'المادة' : _subjectCtrl.text} • ${_gradeCtrl.text.isEmpty ? 'الصف الدراسي' : _gradeCtrl.text}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 13),
                 ),
@@ -268,8 +261,8 @@ class _EditExamScreenState extends State<EditExamScreen> {
     if (!_formKey.currentState!.validate()) return;
     context.read<ExamCubit>().editDraftDetails(
       title: _title.text,
-      subject: _subject!,
-      grade: _grade!,
+      subject: _subjectCtrl.text.trim(),
+      grade: _gradeCtrl.text.trim(),
       teacherName: _teacher.text,
       durationMinutes: _duration,
       instructions: _instructions.text,
@@ -315,5 +308,123 @@ class _EditExamScreenState extends State<EditExamScreen> {
       borderRadius: BorderRadius.circular(13),
       borderSide: const BorderSide(color: _purple, width: 1.5),
     ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: const BorderSide(color: Colors.redAccent),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+    ),
   );
+}
+
+// ─── Autocomplete Field ─────────────────────────────────────────────────────
+
+class _AutocompleteField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final List<String> suggestions;
+  final void Function(String)? onChanged;
+  final String? Function(String?)? validator;
+
+  const _AutocompleteField({
+    required this.controller,
+    required this.hint,
+    required this.suggestions,
+    this.onChanged,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Autocomplete<String>(
+      initialValue: TextEditingValue(text: controller.text),
+      optionsBuilder: (textEditingValue) {
+        final query = textEditingValue.text.trim().toLowerCase();
+        if (query.isEmpty) return suggestions.take(8);
+        return suggestions.where(
+          (s) => s.toLowerCase().contains(query),
+        );
+      },
+      onSelected: (value) {
+        controller.text = value;
+        onChanged?.call(value);
+      },
+      fieldViewBuilder: (context, fieldController, focusNode, onSubmitted) {
+        fieldController.addListener(() {
+          if (controller.text != fieldController.text) {
+            controller.text = fieldController.text;
+            onChanged?.call(fieldController.text);
+          }
+        });
+        return TextFormField(
+          controller: fieldController,
+          focusNode: focusNode,
+          validator: validator == null
+              ? null
+              : (_) => validator!(controller.text),
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: Color(0xFFE4E0ED)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: _purple, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: Colors.redAccent),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+            ),
+            suffixIcon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF8A7BAD),
+            ),
+          ),
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topRight,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(13),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options.elementAt(index);
+                  return InkWell(
+                    onTap: () => onSelected(option),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Text(option),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
