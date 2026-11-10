@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubit/exam_cubit.dart';
+import '../cubit/exam/exam_cubit.dart';
 import '../repos/exam_repository.dart';
 import 'questions_bank_screen.dart';
 

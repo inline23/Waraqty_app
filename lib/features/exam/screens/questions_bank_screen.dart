@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubit/exam_cubit.dart';
+import 'package:waraqty_app/features/exam/cubit/exam/exam_cubit.dart';
 import '../models/question_model.dart';
 import 'question_type_screen.dart';
 import 'exam_preview_screen.dart';
 import 'create_exam_screen.dart';
+import 'saved_questions_screen.dart';
 
 class QuestionsBankScreen extends StatelessWidget {
   const QuestionsBankScreen({super.key});
@@ -173,6 +174,16 @@ class QuestionsBankScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    foregroundColor: const Color(0xFF431599),
+                    side: const BorderSide(color: Color(0xFFBBA7E4)),
+                  ),
+                  onPressed: () => pickQuestionsFromBank(context),
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('إضافة سؤال من بنك الأسئلة'),
+                ),
                 // OutlinedButton.icon(
                 //   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50), foregroundColor: const Color(0xFF431599)),
                 //   onPressed: () => Navigator.pop(context), icon: const Icon(Icons.edit_outlined), label: const Text('تعديل بيانات الامتحان'),

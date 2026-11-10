@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubit/exam_cubit.dart';
+import 'package:waraqty_app/features/exam/cubit/exam/exam_cubit.dart';
 import '../models/question_model.dart';
 import 'question_editor_screen.dart';
 import 'question_type_screen.dart';
 import 'exam_preview_screen.dart';
+import 'saved_questions_screen.dart';
 
 const _purple = Color(0xFF431599);
 const _background = Color(0xFFFAF9FF);
@@ -187,27 +188,50 @@ class EditQuestionsScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // زر إضافة سؤال
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const QuestionTypeScreen(),
+            // زر إضافة سؤال + زر الإضافة من بنك الأسئلة
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const QuestionTypeScreen(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('إضافة سؤال'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _purple,
+                        side: const BorderSide(color: Color(0xFFBBA7E4)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('إضافة سؤال'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _purple,
-                  side: const BorderSide(color: Color(0xFFBBA7E4)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      onPressed: () => pickQuestionsFromBank(context),
+                      icon: const Icon(Icons.inventory_2_outlined, size: 19),
+                      label: const Text('من بنك الأسئلة'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _purple,
+                        side: const BorderSide(color: Color(0xFFBBA7E4)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 10),
             // زر حفظ التعديلات

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:printing/printing.dart';
-
-import '../cubit/exam_cubit.dart';
+import 'package:waraqty_app/features/exam/cubit/exam/exam_cubit.dart';
 import '../models/exam_model.dart';
 import '../models/exam_print_settings.dart';
 import '../models/question_model.dart';
@@ -81,10 +80,8 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfSettingsScreen(
-          exam: _exam,
-          initialSettings: _printSettings,
-        ),
+        builder: (_) =>
+            PdfSettingsScreen(exam: _exam, initialSettings: _printSettings),
       ),
     );
   }
@@ -122,13 +119,6 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
             'معاينة الامتحان',
             style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.tune_outlined),
-              tooltip: 'تخصيص PDF',
-              onPressed: () => _openPdfSettings(context),
-            ),
-          ],
         ),
         body: Column(
           children: [
@@ -675,9 +665,9 @@ class _ExamPreviewScreenState extends State<ExamPreviewScreen> {
                     height: 48,
                     child: OutlinedButton.icon(
                       onPressed: () => _openPdfSettings(context),
-                      icon: const Icon(Icons.tune_outlined, size: 19),
+                      icon: const Icon(Icons.palette_outlined, size: 19),
                       label: const Text(
-                        'تخصيص PDF',
+                        'الشكل',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

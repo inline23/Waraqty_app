@@ -21,6 +21,13 @@ class QuestionModel {
     required this.createdAt,
   });
 
+  /// بصمة السؤال لكشف التكرار في بنك الأسئلة (النوع + النص + البدائل).
+  String get signature {
+    String normalize(String s) =>
+        s.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+    return '${type.name}|${normalize(text)}|${options.map(normalize).join('¦')}';
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'type': type.name,

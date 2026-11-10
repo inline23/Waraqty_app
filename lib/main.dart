@@ -1,18 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:waraqty_app/features/exam/cubit/exam_cubit.dart';
+import 'package:waraqty_app/features/splash/view/splash_screen.dart';
+import 'package:waraqty_app/features/exam/cubit/exam/exam_cubit.dart';
+import 'package:waraqty_app/features/exam/cubit/questions/question_bank_cubit.dart';
 import 'package:waraqty_app/features/exam/models/exam_model.dart';
 import 'package:waraqty_app/features/exam/repos/exam_repository.dart';
+import 'package:waraqty_app/features/exam/repos/question_bank_repository.dart';
 import 'package:waraqty_app/features/exam/screens/create_exam_screen.dart';
 import 'package:waraqty_app/features/exam/screens/exam_preview_screen.dart';
 import 'package:waraqty_app/features/exam/screens/my_exam_screen.dart';
+import 'package:waraqty_app/features/exam/screens/saved_questions_screen.dart';
 import 'package:waraqty_app/features/home/screens/home_screen.dart';
 
 void main() {
+  final examRepository = ExamRepository();
+  final bankRepository = QuestionBankRepository();
   runApp(
-    BlocProvider(
-      create: (_) => ExamCubit(ExamRepository()),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              ExamCubit(examRepository, bankRepository: bankRepository),
+        ),
+        BlocProvider(
+          create: (_) => QuestionBankCubit(bankRepository, examRepository),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -31,7 +44,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF431599)),
         scaffoldBackgroundColor: const Color(0xFFF8F6FC),
       ),
-      home: const AppShell(),
+      home: SplashScreen(
+        nextScreen: const AppShell(),
+      )
     );
   }
 }
@@ -75,12 +90,15 @@ class _AppShellState extends State<AppShell> {
             onOpenExam: _openExam,
           ),
           MyExamsScreen(onOpenExam: _openExam, onCreateExam: _openCreateExam),
+          const SavedQuestionsScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
+          // تحديث البنك عند فتح تبويبه (الأسئلة بتتضاف تلقائيًا مع حفظ الامتحانات)
+          if (index == 2) context.read<QuestionBankCubit>().load();
         },
         backgroundColor: Colors.white,
         indicatorColor: const Color(0xFFF0E8FF),
@@ -95,6 +113,11 @@ class _AppShellState extends State<AppShell> {
             icon: Icon(Icons.library_books_outlined),
             selectedIcon: Icon(Icons.library_books_rounded),
             label: 'امتحاناتي',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.inventory_2_outlined),
+            selectedIcon: Icon(Icons.inventory_2_rounded),
+            label: 'بنك الأسئلة',
           ),
         ],
       ),

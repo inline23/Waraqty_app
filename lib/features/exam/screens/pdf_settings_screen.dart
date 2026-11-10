@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -211,6 +210,7 @@ class _PdfSettingsScreenState extends State<PdfSettingsScreen> {
                 boxShadow: selected
                     ? [
                         BoxShadow(
+                          // ignore: deprecated_member_use
                           color: _purple.withOpacity(0.18),
                           blurRadius: 12,
                           offset: const Offset(0, 4),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../exam/cubit/exam_cubit.dart';
+import '../../exam/cubit/exam/exam_cubit.dart';
 
 import '../../exam/models/exam_model.dart';
 

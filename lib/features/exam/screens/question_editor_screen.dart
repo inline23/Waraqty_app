@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubit/exam_cubit.dart';
+import 'package:waraqty_app/features/exam/cubit/exam/exam_cubit.dart';
+import 'package:waraqty_app/features/exam/cubit/questions/question_bank_cubit.dart';
+
+import '../models/bank_question_model.dart';
 import '../models/question_model.dart';
 import '../models/question_type.dart';
 
 class QuestionEditorScreen extends StatefulWidget {
   final QuestionType type;
   final QuestionModel? question;
-  const QuestionEditorScreen({super.key, required this.type, this.question});
+
+  /// لو متحدد، المحرر بيعدّل سؤال في بنك الأسئلة (مش في امتحان).
+  final BankQuestion? bankItem;
+  const QuestionEditorScreen({
+    super.key,
+    required this.type,
+    this.question,
+    this.bankItem,
+  });
 
   @override
   State<QuestionEditorScreen> createState() => _QuestionEditorScreenState();
@@ -22,6 +33,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   double _marks = 1;
   int _answerLines = 3;
   bool get _isEditing => widget.question != null;
+  bool get _isBankMode => widget.bankItem != null;
 
   @override
   void initState() {
@@ -45,12 +57,14 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final exam = context.read<ExamCubit>().draft;
+    final exam = _isBankMode ? null : context.read<ExamCubit>().draft;
+    final subject = widget.bankItem?.subject ?? exam?.subject ?? '';
+    final grade = widget.bankItem?.grade ?? exam?.grade ?? '';
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: const Color(0xFFFAF9FF),
-        appBar: AppBar(backgroundColor: const Color(0xFFFAF9FF), elevation: 0, title: Text(_isEditing ? 'تعديل السؤال' : 'محرر السؤال')),
+        appBar: AppBar(backgroundColor: const Color(0xFFFAF9FF), elevation: 0, title: Text(_isBankMode ? 'تعديل سؤال في البنك' : (_isEditing ? 'تعديل السؤال' : 'محرر السؤال'))),
         body: Form(
           key: _formKey,
           child: ListView(
@@ -62,7 +76,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                   const SizedBox(width: 10),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(widget.type.arabicName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text('${exam?.grade ?? ''} • ${exam?.subject ?? ''}', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                    Text('$grade • $subject', style: const TextStyle(color: Colors.black54, fontSize: 12)),
                   ])),
                 ])),
               const SizedBox(height: 18),
@@ -139,30 +153,87 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
         ),
         bottomNavigationBar: SafeArea(
           minimum: const EdgeInsets.all(16),
-          child: FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF431599), minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-            onPressed: () {
-              if (!_formKey.currentState!.validate()) return;
-              final now = DateTime.now();
-              final question = QuestionModel(
-                id: widget.question?.id ?? 'question_${now.microsecondsSinceEpoch}',
-                type: widget.type,
-                text: _text.text.trim(),
-                marks: _marks,
-                options: widget.type == QuestionType.multipleChoice ? _options.map((e) => e.text.trim()).toList() : const [],
-                correctAnswer: _answer.text.trim().isEmpty ? null : _answer.text.trim(),
-                answerLines: _answerLines,
-                createdAt: widget.question?.createdAt ?? now,
-              );
-              final cubit = context.read<ExamCubit>();
-              if (_isEditing) { cubit.updateQuestion(question); } else { cubit.addQuestion(question); }
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.check), label: Text(_isEditing ? 'حفظ التعديلات' : 'حفظ السؤال في الامتحان'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!_isBankMode && exam != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF431599),
+                      side: const BorderSide(color: Color(0xFFBBA7E4)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () => _saveToBank(exam.subject, exam.grade),
+                    icon: const Icon(Icons.inventory_2_outlined, size: 19),
+                    label: const Text('إضافة السؤال إلى بنك الأسئلة'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF431599), minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                  onPressed: _submit,
+                  icon: const Icon(Icons.check),
+                  label: Text(_isBankMode ? 'حفظ التعديلات في البنك' : (_isEditing ? 'حفظ التعديلات' : 'حفظ السؤال في الامتحان')),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  QuestionModel? _buildQuestion() {
+    if (!_formKey.currentState!.validate()) return null;
+    final now = DateTime.now();
+    return QuestionModel(
+      id: widget.question?.id ?? 'question_${now.microsecondsSinceEpoch}',
+      type: widget.type,
+      text: _text.text.trim(),
+      marks: _marks,
+      options: widget.type == QuestionType.multipleChoice ? _options.map((e) => e.text.trim()).toList() : const [],
+      correctAnswer: _answer.text.trim().isEmpty ? null : _answer.text.trim(),
+      answerLines: _answerLines,
+      createdAt: widget.question?.createdAt ?? now,
+    );
+  }
+
+  void _submit() {
+    final question = _buildQuestion();
+    if (question == null) return;
+    if (_isBankMode) {
+      context.read<QuestionBankCubit>().updateQuestion(widget.bankItem!.id, question);
+    } else {
+      final cubit = context.read<ExamCubit>();
+      if (_isEditing) { cubit.updateQuestion(question); } else { cubit.addQuestion(question); }
+    }
+    Navigator.pop(context);
+  }
+
+  /// يحفظ السؤال الحالي في البنك (نسخة مستقلة) ويفضل المحرر مفتوح.
+  Future<void> _saveToBank(String subject, String grade) async {
+    final question = _buildQuestion();
+    if (question == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final bank = context.read<QuestionBankCubit>();
+    try {
+      final isNew = await bank.saveQuestion(question, subject: subject, grade: grade);
+      messenger.showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(isNew ? 'تمت إضافة السؤال إلى بنك الأسئلة' : 'السؤال موجود بالفعل في بنك الأسئلة'),
+      ));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text('تعذر الحفظ في بنك الأسئلة: $e'),
+      ));
+    }
   }
 
   String _arabicLetter(int index) {

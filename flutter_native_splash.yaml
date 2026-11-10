@@ -1,0 +1,24 @@
+flutter_native_splash:
+  # خلفية سودا نقية زي التصميم
+  color: "#000000"
+  color_dark: "#000000"
+
+  # لوجو + الإضاءة + اسم التطبيق (متولدة من tools/make_splash.py)
+  image: assets/icon/icon.png
+  image_dark: assets/icon/icon.png
+
+
+  android_gravity: center
+  ios_content_mode: center
+
+  # أندرويد 12+: النظام بيعرض الأيقونة جوه دايرة ومش بيسمح بإضاءة برا الدايرة
+  android_12:
+    color: "#000000"
+    color_dark: "#000000"
+    image: assets/icon/icon.png
+    image_dark: assets/icon/icon.png
+    icon_background_color: "#000000"
+    icon_background_color_dark: "#000000"
+
+  # الشاشة كاملة بدون شريط حالة أثناء السبلاش (اختياري)
+  # fullscreen: true

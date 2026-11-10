@@ -1,13 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../models/exam_model.dart';
-import '../models/question_model.dart';
-import '../repos/exam_repository.dart';
+import 'package:waraqty_app/features/exam/models/bank_question_model.dart';
+import 'package:waraqty_app/features/exam/models/exam_model.dart';
+import 'package:waraqty_app/features/exam/models/question_model.dart';
+import 'package:waraqty_app/features/exam/repos/exam_repository.dart';
+import 'package:waraqty_app/features/exam/repos/question_bank_repository.dart';
+
 
 part 'exam_state.dart';
 
 class ExamCubit extends Cubit<ExamState> {
   final ExamRepository repository;
-  ExamCubit(this.repository) : super(ExamInitial());
+  final QuestionBankRepository? bankRepository;
+  ExamCubit(this.repository, {this.bankRepository}) : super(ExamInitial());
 
   List<ExamModel> exams = [];
   ExamModel? draft;
@@ -78,6 +82,34 @@ class ExamCubit extends Cubit<ExamState> {
     emit(ExamDraftChanged(draft!));
   }
 
+  /// إضافة أسئلة من بنك الأسئلة للمسودة كنسخ مستقلة (id جديد لكل نسخة)،
+  /// فأي تعديل/حذف في الامتحان أو في البنك لا يؤثر على الطرف التاني.
+  /// بترجع عدد الأسئلة اللي اتضافت فعلًا (بتتجاهل المكرر الموجود في الامتحان).
+  int addBankQuestions(List<BankQuestion> items) {
+    final current = draft;
+    if (current == null || items.isEmpty) return 0;
+    final existing = current.questions.map((q) => q.signature).toSet();
+    final now = DateTime.now();
+    final copies = <QuestionModel>[];
+    for (final item in items) {
+      if (!existing.add(item.signature)) continue;
+      copies.add(
+        item.question.copyWith(
+          id: 'question_${now.microsecondsSinceEpoch}_${copies.length}',
+          options: List<String>.from(item.question.options),
+          createdAt: now,
+        ),
+      );
+    }
+    if (copies.isEmpty) return 0;
+    draft = current.copyWith(
+      questions: [...current.questions, ...copies],
+      updatedAt: now,
+    );
+    emit(ExamDraftChanged(draft!));
+    return copies.length;
+  }
+
   void updateQuestion(QuestionModel question) {
     final current = draft;
     if (current == null) return;
@@ -136,6 +168,14 @@ class ExamCubit extends Cubit<ExamState> {
     try {
       await repository.saveExam(current.copyWith(updatedAt: DateTime.now()));
       exams = await repository.getExams();
+      // حفظ أسئلة الامتحان في بنك الأسئلة (بدون تكرار). فشل البنك لا يمنع حفظ الامتحان.
+      try {
+        await bankRepository?.addQuestions(
+          current.questions,
+          subject: current.subject,
+          grade: current.grade,
+        );
+      } catch (_) {}
       isSaving = false;
       emit(ExamOperationSuccess('تم حفظ الامتحان بنجاح', List.unmodifiable(exams)));
     } catch (e) {
