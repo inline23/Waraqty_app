@@ -1,16 +1,11 @@
+
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:waraqty_app/features/onboarding/data/onboarding_repository.dart';
+import 'package:waraqty_app/features/onboarding/screens/onboarding_screen.dart';
 
 /// Animated Waraqty splash screen.
-///
-/// Usage:
-/// MaterialApp(
-///   home: SplashScreen(nextScreen: const HomeScreen()),
-/// )
-///
-/// Put your transparent logo at: assets/images/waraqty_logo.png
 class SplashScreen extends StatefulWidget {
   const SplashScreen({
     super.key,
@@ -31,6 +26,10 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _entryController;
   late final Animation<double> _fade;
   late final Animation<double> _scale;
+
+  final OnboardingRepository _onboardingRepository =
+      OnboardingRepository();
+
   Timer? _navigationTimer;
 
   static const Color _purple = Color(0xFF8B3DFF);
@@ -54,24 +53,48 @@ class _SplashScreenState extends State<SplashScreen>
       parent: _entryController,
       curve: Curves.easeOut,
     );
+
     _scale = Tween<double>(begin: 0.82, end: 1).animate(
-      CurvedAnimation(parent: _entryController, curve: Curves.easeOutBack),
+      CurvedAnimation(
+        parent: _entryController,
+        curve: Curves.easeOutBack,
+      ),
     );
 
     _entryController.forward();
 
-    _navigationTimer = Timer(widget.duration, () {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder<void>(
-          pageBuilder: (_, __, ___) => widget.nextScreen,
-          transitionDuration: const Duration(milliseconds: 450),
-          transitionsBuilder: (_, animation, __, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        ),
-      );
-    });
+    _navigationTimer = Timer(widget.duration, _navigateNext);
+  }
+
+  Future<void> _navigateNext() async {
+    if (!mounted) return;
+
+    bool isCompleted = false;
+
+    try {
+      isCompleted = await _onboardingRepository.isCompleted();
+    } catch (_) {
+      // إذا تعذرت قراءة الحالة، نعرض Onboarding احتياطياً.
+    }
+
+    if (!mounted) return;
+
+    final Widget destination = isCompleted
+        ? widget.nextScreen
+        : OnboardingScreen(nextScreen: widget.nextScreen);
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (_, __, ___) => destination,
+        transitionDuration: const Duration(milliseconds: 450),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -88,7 +111,10 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: Colors.black,
       body: SizedBox.expand(
         child: AnimatedBuilder(
-          animation: Listenable.merge([_glowController, _entryController]),
+          animation: Listenable.merge([
+            _glowController,
+            _entryController,
+          ]),
           builder: (context, _) {
             final pulse = 0.78 + (_glowController.value * 0.22);
             final glowRadius = 105.0 + (_glowController.value * 35.0);
@@ -113,6 +139,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
+
                 // Animated halo.
                 Transform.scale(
                   scale: 0.94 + (_glowController.value * 0.12),
@@ -136,6 +163,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
+
                 FadeTransition(
                   opacity: _fade,
                   child: ScaleTransition(
